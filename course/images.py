@@ -1,17 +1,38 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.transform import rescale
+from skimage.filters import threshold_otsu
+
 import cv2
 
 
 MONA_LISA = './media/mona_lisa.jpg'
 CAMERAMAN = './media/cameraman.jpg'
 
+
+def mona_lisa_downscaled_w_annotation(scale=0.75, **kwargs):
+
+    f, axes = plt.subplots(1, 1, **kwargs)
+
+    img = plt.imread(MONA_LISA)
+    img = rescale(img, scale, anti_aliasing=False, multichannel=True)
+    img = np.floor(255*img[:,:,0])
+
+    axes.imshow(img, cmap='gray', vmin=0, vmax=255)
+    axes.set_xlabel("pixel")
+    axes.set_ylabel("pixel")
+
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            color = str((255 - img[i, j])/255)
+            axes.text(j, i, int(img[i, j]), ha="center", va="center", color=color)
+
+    return (f, axes)
+
 def mona_lisa_downscaled(n=4):
 
 
     f, axes = plt.subplots(1, n, figsize=(5 + 5*(n-1),10))
-
 
     img = plt.imread(MONA_LISA)
 
@@ -111,13 +132,66 @@ def remove_background(filename, level=500):
 
     return f, axes
 
-# def cameraman_wo_background(k=51):
 
-#     img = plt.imread("cameraman.jpg")
+def cameraman_w_noise(noise_type, **kwargs):
 
-#     f, ax = plt.subplots(1, 1, figsize=(15,5))
-#     img = cv2.GaussianBlur(img, (5,5), 0, 0, cv2.BORDER_DEFAULT)
-#     background = cv2.GaussianBlur(img, (k,k), 0, 0, cv2.BORDER_DEFAULT)
-#     ax.imshow(img-background, cmap='gray')
+    f, ax = plt.subplots(1, 1, **kwargs)
 
-#     return f, ax
+    img = plt.imread(CAMERAMAN)
+    img = img/255
+
+    if noise_type == 'gauss':
+        noise = np.random.normal(0, 0.05, img.shape)
+    elif noise_type == 'salt-och-peppar':
+        noise = np.random.choice((-1, 0, 1), size=img.shape, p=(0.05, 0.9, 0.05))
+    elif noise_type == 'period':
+        noise = np.random.normal(0, 0.05, img.shape)
+        x = np.linspace(-np.pi, np.pi, img.shape[0])
+        y = np.linspace(-np.pi, np.pi, img.shape[1])
+    
+        x, y = np.meshgrid(x, y)
+
+        p = np.sin((x+y))
+
+        noise = p * noise
+    elif noise_type == 'kvantiserings':
+        img = rescale(img, 0.25, anti_aliasing=False, multichannel=False)
+        noise = np.zeros(img.shape)
+
+    else:
+        raise ValueError
+
+    ax.imshow(np.clip(img+noise, 0, 1), cmap='gray', vmin=0, vmax=1)
+    ax.set_xlabel("pixel")
+    ax.set_ylabel("pixel")
+    ax.set_title(f"Figur med {noise_type}-brus")
+
+    return (f, ax)
+
+def segment_cameraman(**kwargs):
+
+    f, ax = plt.subplots(1, 1, **kwargs)
+
+    img = plt.imread(CAMERAMAN)
+    thresh = threshold_otsu(img)
+    binary = img > thresh
+
+    ax.imshow(binary, cmap='gray', vmin=0, vmax=1)
+    ax.set_xlabel("pixel")
+    ax.set_ylabel("pixel")
+
+    return (f, ax)
+
+def segment_threshold(filename, **kwargs):
+
+    f, ax = plt.subplots(1, 1, **kwargs)
+
+    img = plt.imread(filename)
+    thresh = threshold_otsu(img)
+    binary = img > thresh
+
+    ax.imshow(binary, cmap='gray', vmin=0, vmax=1)
+    ax.set_xlabel("pixel")
+    ax.set_ylabel("pixel")
+
+    return (f, ax)
