@@ -15,6 +15,14 @@ from nltk.tokenize import MWETokenizer
 from sklearn.decomposition import LatentDirichletAllocation as LDA
 import pyLDAvis.sklearn
 
+def quote_url(url):
+    splits = url.split('/')
+    key = splits[-1]
+    key = urllib.parse.quote(key)
+    splits[-1] = key
+    
+    return '/'.join(splits)
+
 
 def extract_text(html):
     
@@ -70,6 +78,7 @@ def query_riksdagen(topic='skatt', doc_type='mot', from_date='2010-01-01', tom_d
 
                 # Get the html page with the actual content
                 html_url = 'http:'+document.get(document_url)
+                html_url = quote_url(html_url)
                 html_response = urllib.request.urlopen(html_url).read()
 
                 # Add text in document to data
