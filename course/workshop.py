@@ -98,7 +98,7 @@ def TopicModel(pipeline, data, n_topics=5, **kwargs):
 
     processed = pipeline.fit_transform(data)
 
-    lda = LDA(n_components=n_topics).fit(processed)
+    lda = LDA(n_components=n_topics, random_state=42).fit(processed)
     return pyLDAvis.sklearn.prepare(lda, processed, pipeline[-1], **kwargs)
 
 
